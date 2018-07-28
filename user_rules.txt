@@ -1,0 +1,23 @@
+username_text
+cups_text
+cash_text
+bolts_text
+
+CASH (C) line 1 
+BOLTS (B) line 2 
+CUPS (T) line 3
+
+
+example:
+
+"100C;20B;1000T"
+100 cash, 20 bolts, 1000 cups
+
+
+DEFAULT string :
+"250,20,100"
+
+so every users starts with
+250 cash
+20 bolts 
+100 cups

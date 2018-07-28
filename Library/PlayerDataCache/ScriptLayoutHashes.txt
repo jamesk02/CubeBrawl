@@ -147,5 +147,5 @@ c2275a8bfbb9f9942cad75ecdfded41d UnityEngine.HoloLens.dll:UnityEngine.VR.WSA.Spa
 200b8767418d795f2159c2f99e80283f Assembly-CSharp-firstpass.dll:.ThidPersonExampleController
 20d8fbd36eb3362443638beb7034e183 Assembly-CSharp-firstpass.dll:CnControls.SensitiveJoystick
 600bf2432747463c84424edccb3c1d05 Assembly-CSharp-firstpass.dll:UnityStandardAssets._2D.Camera2DFollow
-be98d2f1073625979c5009e4a1be1c91 Assembly-CSharp-firstpass.dll:UnityStandardAssets.Copy._2D.PlatformerCharacter2D
 05524b8f659e7bfe5756d1335fec24ba Assembly-CSharp.dll:.GameManager
+be98d2f1073625979c5009e4a1be1c91 Assembly-CSharp-firstpass.dll:UnityStandardAssets.Copy._2D.PlatformerCharacter2D

@@ -130,7 +130,8 @@ public class PlayerController : NetworkBehaviour
             adjVertInput = 0f;
         }
 
-        
+
+        Debug.Log(gameManager.GetSliderVal());
         playerTransform.localScale = new Vector3(gameManager.GetSliderVal() * 10, playerTransform.localScale.y, playerTransform.localScale.z);
     }
 

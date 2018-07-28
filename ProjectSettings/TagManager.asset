@@ -7,6 +7,17 @@ TagManager:
   - joystick
   - slider
   - netmanager
+  - shopmanager
+  - username_text
+  - cups_text
+  - cash_text
+  - bolts_text
+  - mainmenu
+  - loadwheel
+  - userprogresscontainer
+  - player_display_obj
+  - quickplay_btn
+  - accmanager
   layers:
   - Default
   - TransparentFX
