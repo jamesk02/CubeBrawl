@@ -44,13 +44,15 @@ public class PlayerController : NetworkBehaviour
         scale = transform.localScale.x;
     }
 
-    // Only affects the local player, no other players in game. This means the player is distinguishable from the others (playerMat)
+    // Only affects the local player, no other players in game. 
     public override void OnStartLocalPlayer()
     {
-        GetComponent<MeshRenderer>().material = playerMat;
+        GetComponent<MeshRenderer>().material = playerMat; // sets the player colour to blue, which distinguishes from the red enemy
         gameManager = GameObject.FindGameObjectWithTag("netmanager").GetComponent<GameManager>(); // ref game manager
         sensitiveJoystick = GameObject.FindGameObjectWithTag("joystick").GetComponent<SensitiveJoystick>(); // discover the joy stick
-        spawnPoints = GameObject.FindObjectsOfType<NetworkStartPosition>();
+        spawnPoints = GameObject.FindObjectsOfType<NetworkStartPosition>(); // gets all spawnpoints
+        // to add another spawnpoint: add empty to 'spawnpoints' and call it something like 'spawnpoint3' and add NetworkStartPosition
+        // component
     }
 
     void FixedUpdate ()
@@ -61,7 +63,7 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
-        if (playerTransform.position.y < -5)
+        if (playerTransform.position.y < -30) // if the player falls below this level, he will die
         {
             Respawn();
         }
