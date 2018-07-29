@@ -19,12 +19,17 @@ public class AccountManager : MonoBehaviour
     private InputField LogInPasswordInput;
     [SerializeField]
     private Text LogInErrorText;
+
+    // public : so game manager can access it 
+    public GameObject mainLoadWheel;
+    public GameObject userProgressContainer;
+    public GameObject mainMenu; 
+    public GameObject playerShowcase;
     
-    private GameObject userProgressContainer;
-    private GameObject mainMenu;
-    private GameObject loadingBar;
-    private GameObject player;
     public bool isMainMenuStillLoading = true;
+
+    private GameObject authMenu;
+    private GameObject authLoadWheel;
 
     // register UI variables
     [SerializeField]
@@ -35,6 +40,9 @@ public class AccountManager : MonoBehaviour
     private InputField RegisterConfPassInput;
     [SerializeField]
     private Text RegisterErrorText;
+
+    private Button logInButton;
+    private Button registerButton;
 
     public string loggedInUsername;
     private string loggedInPassword;
@@ -49,17 +57,33 @@ public class AccountManager : MonoBehaviour
 
     private void OnSceneChanged(Scene current, Scene next)
     {
+        /* You may notice there's two different load wheels
+         * As much as I'd like to have one load wheel that doesn't destroy on load.
+         * If that were the case, I'd have to have an entire canvas dedicated to that load wheel and I feel
+         * that is simply unnecessary. For this reason, each scene has their own dedicated load wheel instance.
+         */
+        
+        
+        // auth menu
+        if (next.buildIndex == 0)
+        {
+            authLoadWheel = GameObject.FindGameObjectWithTag("loadwheel");
+            authMenu = GameObject.FindGameObjectWithTag("authmenu");
+            authLoadWheel.SetActive(false);
+        }
         // Main menu 
         if (next.buildIndex == 1)
         {
+            mainLoadWheel = GameObject.FindGameObjectWithTag("loadwheel");
             mainMenu = GameObject.FindGameObjectWithTag("mainmenu");
             userProgressContainer = GameObject.FindGameObjectWithTag("userprogresscontainer");
-            loadingBar = GameObject.FindGameObjectWithTag("loadwheel");
-            player = GameObject.FindGameObjectWithTag("player_display_obj");
+            playerShowcase = GameObject.FindGameObjectWithTag("player_display_obj");
 
+            mainLoadWheel.SetActive(true);
             mainMenu.SetActive(false);
             userProgressContainer.SetActive(false);
-            player.SetActive(false);
+            playerShowcase.SetActive(false);
+            
 
             StartCoroutine(GetUserData());
         }
@@ -90,9 +114,9 @@ public class AccountManager : MonoBehaviour
             
 
             mainMenu.SetActive(true);
-            loadingBar.SetActive(false);
+            mainLoadWheel.SetActive(false);
             userProgressContainer.SetActive(true);
-            player.SetActive(true);
+            playerShowcase.SetActive(true);
 
             // show user data in UI
             GameObject.FindGameObjectWithTag("username_text").GetComponent<Text>().text = loggedInUsername;
@@ -117,35 +141,62 @@ public class AccountManager : MonoBehaviour
     }
 
     // This method is called by the log in button, which then passes to a coroutine.
-    public void TriggerLogIn()
+    public void TriggerLogIn(Button btn)
     {
+        logInButton = btn;
+        logInButton.interactable = false;
+
+        authMenu.SetActive(false);
+        authLoadWheel.SetActive(true);
         StartCoroutine(instance.LogIn(LogInUsernameInput.text, LogInPasswordInput.text));
     }
 
     // This method is called by the register button, which then passes to a coroutine.
-    public void TriggerRegister()
+    public void TriggerRegister(Button btn)
     {
-        if (RegisterPassInput.text != RegisterConfPassInput.text)
+        // stops interaction with buttons whilst loading is occuring
+        registerButton = btn;
+        registerButton.interactable = false;
+
+        
+
+        string registerUsername = RegisterUsernameInput.text.ToLower(); // all usernames are converted to lower case
+        string registerPass = RegisterPassInput.text;
+        string registerConfPass = RegisterConfPassInput.text;
+
+        if (registerUsername == "" && registerPass == "")
+        {
+            // nothing inputted
+            RegisterErrorText.enabled = true;
+            RegisterErrorText.text = "Please enter some data.";
+            registerButton.interactable = true;
+        }
+        else if (registerPass != registerConfPass)
         {
             // passwords don't match
             RegisterErrorText.enabled = true;
             RegisterErrorText.text = "Your passwords don't match.";
+            registerButton.interactable = true;
 
         }
-        else if (RegisterPassInput.text.Length < 6)
+        else if (registerPass.Length < 6)
         {
             // pass too short
             RegisterErrorText.text = "Your password must be 6 characters or longer.";
+            registerButton.interactable = true;
         }
-        else if (RegisterUsernameInput.text.Length < 5)
+        else if (registerUsername.Length < 5 || registerUsername.Length > 12)
         {
-            // username too short
-            RegisterErrorText.text = "Your username must be 5 characters or longer.";
+            // username too short or long
+            RegisterErrorText.text = "Your username must be between 5-12 characters.";
+            registerButton.interactable = true;
         }
         else
         {
             // start create account process
-            StartCoroutine(instance.Register(RegisterUsernameInput.text, RegisterPassInput.text));
+            authMenu.SetActive(false);
+            authLoadWheel.SetActive(true);
+            StartCoroutine(instance.Register(registerUsername, registerPass));
         }
         
     }
@@ -177,7 +228,7 @@ public class AccountManager : MonoBehaviour
             if (output == "UserError")
             {
                 // username taken
-                RegisterErrorText.text = "The username you chose has already been taken.";
+                RegisterErrorText.text = "The username you chose is already in use.";
             }
             else if (output == "UserShort")
             {
@@ -195,7 +246,10 @@ public class AccountManager : MonoBehaviour
                 RegisterErrorText.text = "An error occured.";
             }
         }
-        
+
+        authLoadWheel.SetActive(false);
+        authMenu.SetActive(true);
+        registerButton.interactable = true;
     }
 
     private void FixedUpdate()
@@ -246,6 +300,10 @@ public class AccountManager : MonoBehaviour
                 LogInErrorText.text = "An error occured.";
             }
         }
+
+        authLoadWheel.SetActive(false);
+        authMenu.SetActive(true);
+        logInButton.interactable = true;
     }
 
     // if the user is logged in, get their data

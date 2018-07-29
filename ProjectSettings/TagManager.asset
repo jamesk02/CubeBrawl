@@ -18,6 +18,7 @@ TagManager:
   - player_display_obj
   - quickplay_btn
   - accmanager
+  - authmenu
   layers:
   - Default
   - TransparentFX

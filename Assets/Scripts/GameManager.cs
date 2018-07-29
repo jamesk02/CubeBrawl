@@ -31,6 +31,12 @@ public class GameManager : NetworkBehaviour
 
     private void OnQuickPlayClick()
     {
+        quickPlayBtn.interactable = false; // prevent spamming of clicks, which fucks up the methods
+        accManager.mainLoadWheel.SetActive(true);
+        accManager.userProgressContainer.SetActive(false);
+        accManager.mainMenu.SetActive(false);
+        accManager.playerShowcase.SetActive(false);
+
         Debug.Log("on quick play click");
         matchMaker.ListMatches(0, 10, "", true, 0, 0, OnMatchList);
     }
@@ -59,6 +65,16 @@ public class GameManager : NetworkBehaviour
             MatchInfo hostInfo = matchInfo;
             NetworkManager.singleton.StartClient(hostInfo);
         }
+        else
+        {
+            // if there's an error, re show the menu so the player can select a different option.
+            // TODO : display error messages like in auth menu
+            quickPlayBtn.interactable = true;
+            accManager.userProgressContainer.SetActive(true);
+            accManager.mainLoadWheel.SetActive(false);
+            accManager.mainMenu.SetActive(true);
+            accManager.playerShowcase.SetActive(true);
+        }
     }
 
     private void Update()
@@ -66,7 +82,7 @@ public class GameManager : NetworkBehaviour
         // adds button listener when scene has finished loading
         if (!accManager.isMainMenuStillLoading && SceneManager.GetActiveScene().buildIndex == 1)
         {
-            Debug.Log("its no longer loading!!!!");
+            Debug.Log("Load complete.");
 
             if (!quickPlayInstantiated)
             {
@@ -104,6 +120,15 @@ public class GameManager : NetworkBehaviour
         {
             Debug.Log("match was not created " + extendedInfo);
         }
+
+        // if there's an error, re show the menu so the player can select a different option.
+        // TODO : display error messages like in auth menu
+        // TODO : this code is repeated in OnMatchjoin -> enclose into a method
+        quickPlayBtn.interactable = true;
+        accManager.userProgressContainer.SetActive(true);
+        accManager.mainLoadWheel.SetActive(false);
+        accManager.mainMenu.SetActive(true);
+        accManager.playerShowcase.SetActive(true);
     }
 
     private void OnSceneChanged(Scene current, Scene next)
