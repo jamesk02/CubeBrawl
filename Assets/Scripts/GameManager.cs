@@ -8,7 +8,7 @@ using UnityEngine.Networking.Match;
 using UnityEngine.SceneManagement;
 
 // Handles joining games, and enabling the scale slider value to function properly. :)
-// (this is a really fucking integral part of the game now)
+// (this is a really integral part of the game now)
 public class GameManager : NetworkBehaviour
 {
     private float sliderVal = 0.1f;
