@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using DatabaseControl;
 using UnityEngine.SceneManagement;
 using System;
+using UnityEngine.Networking;
 
 // Essentially just manages the DCF in built database control module.
 // https://assetstore.unity.com/packages/tools/network/database-control-free-41337
@@ -59,7 +60,7 @@ public class AccountManager : MonoBehaviour
     {
         /* You may notice there's two different load wheels
          * As much as I'd like to have one load wheel that doesn't destroy on load.
-         * If that were the case, I'd have to have an entire canvas dedicated to that load wheel and I feel
+         * If that were the case, I'd have to have an entire canvas dedicated to that load wheel and 
          * that is simply unnecessary. For this reason, each scene has their own dedicated load wheel instance.
          */
         
@@ -185,10 +186,10 @@ public class AccountManager : MonoBehaviour
             RegisterErrorText.text = "Your password must be 6 characters or longer.";
             registerButton.interactable = true;
         }
-        else if (registerUsername.Length < 5 || registerUsername.Length > 12)
+        else if (registerUsername.Length < 5 || registerUsername.Length > 11)
         {
             // username too short or long
-            RegisterErrorText.text = "Your username must be between 5-12 characters.";
+            RegisterErrorText.text = "Your username must be between 5-11 characters.";
             registerButton.interactable = true;
         }
         else
@@ -203,53 +204,35 @@ public class AccountManager : MonoBehaviour
 
     IEnumerator Register(string username, string password)
     {
-        // uses HTTP requests to poll for registering user
-        // responds to output in real time, hence the need for ienumerator
-        IEnumerator e = DCF.RegisterUser(username, password, "250,20,100"); // 250 cash, 20 bolts, 100 cups
-        // 10 R refers to bolts, 100 C refers to credits
-        while (e.MoveNext())
-        {
-            yield return e.Current;
-        }
-        string output = e.Current as string;
-        
-        if (output == "Success")
-        {
-            // account created
-            isLoggedIn = true;
-            loggedInUsername = username;
-            loggedInPassword = password;
-            StartCoroutine(instance.GetUserData());
-            SceneManager.LoadScene(1); // load main scene TODO change this to main menu with shop etc.
-        }
-        else
-        {
-            RegisterErrorText.enabled = true;
-            if (output == "UserError")
-            {
-                // username taken
-                RegisterErrorText.text = "The username you chose is already in use.";
-            }
-            else if (output == "UserShort")
-            {
-                // username too short
-                RegisterErrorText.text = "Your username must be 5 characters or longer.";
-            }
-            else if (output == "PassShort")
-            {
-                // password too short
-                RegisterErrorText.text = "Your password must be 6 characters or longer.";
-            }
-            else if (output == "Error")
-            {
-                // another error
-                RegisterErrorText.text = "An error occured.";
-            }
-        }
+        WWWForm form = new WWWForm();
+        form.AddField("username", username);
+        form.AddField("password", password);
 
-        authLoadWheel.SetActive(false);
-        authMenu.SetActive(true);
-        registerButton.interactable = true;
+        using (UnityWebRequest www = UnityWebRequest.Post("https://cubebrawl-webapi.nw.r.appspot.com/register", form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.isNetworkError || www.isHttpError)
+            {
+                // If unsuccessful
+                authLoadWheel.SetActive(false);
+                authMenu.SetActive(true);
+                registerButton.interactable = true;
+                RegisterErrorText.text = www.downloadHandler.text;
+            }
+            else
+            {
+                Debug.Log("Sign up success");
+                
+                isLoggedIn = true;
+                loggedInUsername = username;
+                loggedInPassword = password;
+                //StartCoroutine(instance.GetUserData());
+                SceneManager.LoadScene(1); // load main scene*/ 
+            }
+        }
+        
+        
     }
 
     private void FixedUpdate()
@@ -265,7 +248,36 @@ public class AccountManager : MonoBehaviour
 
     IEnumerator LogIn(string username, string password)
     {
-        IEnumerator e = DCF.Login(LogInUsernameInput.text, LogInPasswordInput.text);
+        WWWForm form = new WWWForm();
+        form.AddField("username", username);
+        form.AddField("password", password);
+
+        using (UnityWebRequest www = UnityWebRequest.Post("https://cubebrawl-webapi.nw.r.appspot.com/login", form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.isNetworkError || www.isHttpError)
+            {
+                // If unsuccessful
+                authLoadWheel.SetActive(false);
+                authMenu.SetActive(true);
+                logInButton.interactable = true;
+                LogInErrorText.enabled = true;
+                LogInErrorText.text = www.downloadHandler.text;
+            }
+            else
+            {
+                Debug.Log("Login success");
+                
+                isLoggedIn = true;
+                loggedInUsername = username;
+                loggedInPassword = password;
+                //StartCoroutine(instance.GetUserData());
+                SceneManager.LoadScene(1); // load main scene*/ 
+            }
+        }
+        
+        /*IEnumerator e = DCF.Login(LogInUsernameInput.text, LogInPasswordInput.text);
         while (e.MoveNext())
         {
             yield return e.Current;
@@ -303,7 +315,7 @@ public class AccountManager : MonoBehaviour
 
         authLoadWheel.SetActive(false);
         authMenu.SetActive(true);
-        logInButton.interactable = true;
+        logInButton.interactable = true;*/
     }
 
     // if the user is logged in, get their data
@@ -319,8 +331,8 @@ public class AccountManager : MonoBehaviour
         if (response == "Error")
         {
             //There was another error. Automatically logs player out. This error message should never appear, but is here just in case.
-            loggedInUsername = "";
-            loggedInPassword = "";
+            //loggedInUsername = "";
+            //loggedInPassword = "";
         }
         else
         {
