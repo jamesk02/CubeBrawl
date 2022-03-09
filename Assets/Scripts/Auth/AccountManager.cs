@@ -208,7 +208,7 @@ public class AccountManager : MonoBehaviour
         form.AddField("username", username);
         form.AddField("password", password);
 
-        using (UnityWebRequest www = UnityWebRequest.Post("https://cubebrawl-webapi.nw.r.appspot.com/register", form))
+        using (UnityWebRequest www = UnityWebRequest.Post("https://cubebrawl.nw.r.appspot.com/register", form))
         {
             yield return www.SendWebRequest();
 
@@ -252,7 +252,7 @@ public class AccountManager : MonoBehaviour
         form.AddField("username", username);
         form.AddField("password", password);
 
-        using (UnityWebRequest www = UnityWebRequest.Post("https://cubebrawl-webapi.nw.r.appspot.com/login", form))
+        using (UnityWebRequest www = UnityWebRequest.Post("https://cubebrawl.nw.r.appspot.com/login", form))
         {
             yield return www.SendWebRequest();
 
