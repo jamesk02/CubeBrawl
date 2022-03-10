@@ -50,9 +50,9 @@ public class AccountManager : MonoBehaviour
     private string loggedInUserData;
     private bool isLoggedIn = false;
 
-    public int playerCash;
-    public int playerBolts;
-    public int playerCups;
+    public int playerCoins;
+    public int playerGems;
+    public int playerTrophies;
  
     public static AccountManager instance; // uses instancing to avoid multiple account managers in one scene
 
@@ -79,14 +79,16 @@ public class AccountManager : MonoBehaviour
             mainMenu = GameObject.FindGameObjectWithTag("mainmenu");
             userProgressContainer = GameObject.FindGameObjectWithTag("userprogresscontainer");
             playerShowcase = GameObject.FindGameObjectWithTag("player_display_obj");
-
-            mainLoadWheel.SetActive(true);
-            mainMenu.SetActive(false);
-            userProgressContainer.SetActive(false);
-            playerShowcase.SetActive(false);
             
+            GameObject.FindWithTag("userprogresscontainer").SetActive(true);
+            playerShowcase.SetActive(true);
 
-            StartCoroutine(GetUserData());
+            // show user data in UI
+            GameObject.FindGameObjectWithTag("username_text").GetComponent<Text>().text = loggedInUsername;
+            GameObject.FindGameObjectWithTag("cash_text").GetComponent<Text>().text = playerCoins.ToString();
+            GameObject.FindGameObjectWithTag("bolts_text").GetComponent<Text>().text = playerGems.ToString();
+            GameObject.FindGameObjectWithTag("cups_text").GetComponent<Text>().text = playerTrophies.ToString();
+
         }
         // In game 
         else if (next.buildIndex == 2)
@@ -96,7 +98,7 @@ public class AccountManager : MonoBehaviour
     }
 
     // When the main menu loads, the GetUserData coroutine is called and this is the callback function.
-    void OnGetUserData()
+    /*void OnGetUserData()
     {
         
         // It first unwraps the data as all user data is stored in a single string, and then adds the values to their relevant UI components.
@@ -107,9 +109,7 @@ public class AccountManager : MonoBehaviour
             playerCash = Convert.ToInt32(data[0]);
             playerBolts = Convert.ToInt32(data[1]);
             playerCups = Convert.ToInt32(data[2]);
-
             
-
             Debug.Log("Loading finished");
             isMainMenuStillLoading = false;
             
@@ -125,7 +125,7 @@ public class AccountManager : MonoBehaviour
             GameObject.FindGameObjectWithTag("bolts_text").GetComponent<Text>().text = playerBolts.ToString();
             GameObject.FindGameObjectWithTag("cups_text").GetComponent<Text>().text = playerCups.ToString();
         }
-    }
+    }*/
 
     void Awake()
     {
@@ -227,7 +227,8 @@ public class AccountManager : MonoBehaviour
                 isLoggedIn = true;
                 loggedInUsername = username;
                 loggedInPassword = password;
-                //StartCoroutine(instance.GetUserData());
+                
+                StartCoroutine(instance.GetUserData());
                 SceneManager.LoadScene(1); // load main scene*/ 
             }
         }
@@ -235,16 +236,6 @@ public class AccountManager : MonoBehaviour
         
     }
 
-    private void FixedUpdate()
-    {
-        // debug just to see if logged in and that
-        // TODO remove this before release
-        if (isLoggedIn)
-        {
-            Debug.Log("username : " + loggedInUsername);
-            Debug.Log("password : " + loggedInPassword);
-        }
-    }
 
     IEnumerator LogIn(string username, string password)
     {
@@ -272,56 +263,55 @@ public class AccountManager : MonoBehaviour
                 isLoggedIn = true;
                 loggedInUsername = username;
                 loggedInPassword = password;
-                //StartCoroutine(instance.GetUserData());
+                StartCoroutine(instance.GetUserData());
                 SceneManager.LoadScene(1); // load main scene*/ 
             }
         }
-        
-        /*IEnumerator e = DCF.Login(LogInUsernameInput.text, LogInPasswordInput.text);
-        while (e.MoveNext())
-        {
-            yield return e.Current;
-        }
-        string output = e.Current as string;
-        if (output == "Success")
-        {
-            // TODO bundle this and the equiv. in register into one method to clean up code
-            // log in successful
-            isLoggedIn = true;
-            loggedInUsername = username;
-            loggedInPassword = password;
-            StartCoroutine(instance.GetUserData());
-            SceneManager.LoadScene(1); // load main scene TODO change this to main menu with shop etc.
-        }
-        else
-        {
-            LogInErrorText.enabled = true;
-            if (output == "UserError")
-            {
-                // username doesnt exist
-                LogInErrorText.text = "Username or password incorrect.";
-            }
-            else if (output == "PassError")
-            {
-                // username exists, wrong pass
-                LogInErrorText.text = "Username or password incorrect.";
-            }
-            else if (output == "Error")
-            {
-                // misc error
-                LogInErrorText.text = "An error occured.";
-            }
-        }
 
-        authLoadWheel.SetActive(false);
-        authMenu.SetActive(true);
-        logInButton.interactable = true;*/
     }
 
     // if the user is logged in, get their data
     IEnumerator GetUserData()
     {
-        IEnumerator e = DCF.GetUserData(loggedInUsername, loggedInPassword); // << Send request to get the player's data string. Provides the username and password
+        using (UnityWebRequest www = UnityWebRequest.Get("https://cubebrawl.nw.r.appspot.com/api/user/getData"))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.isNetworkError || www.isHttpError)
+            {
+                // If unsuccessful
+                
+            }
+            else
+            {
+                Debug.Log("Successfully retrieved UserData");
+                
+                isMainMenuStillLoading = false;
+                
+                Debug.Log(www.downloadHandler.text);
+
+                String result = www.downloadHandler.text;
+                
+                string[] data = result.Split(','); // splits data by semi colon to reveal all values
+
+                playerCoins = Convert.ToInt32(data[0]);
+                playerGems = Convert.ToInt32(data[1]);
+                playerTrophies = Convert.ToInt32(data[2]);
+                
+                mainMenu.SetActive(true);
+                
+                GameObject.FindWithTag("mainmenu").SetActive(true);
+                //if (mainLoadWheel != null)
+                //{
+                mainLoadWheel.SetActive(false);
+                //}
+
+                //StartCoroutine(instance.GetUserData());
+                SceneManager.LoadScene(1); // load main scene*/ 
+            }
+        }
+        
+        /*IEnumerator e = DCF.GetUserData(loggedInUsername, loggedInPassword); // << Send request to get the player's data string. Provides the username and password
         while (e.MoveNext())
         {
             yield return e.Current;
@@ -339,7 +329,9 @@ public class AccountManager : MonoBehaviour
             //The player's data was retrieved. Goes back to loggedIn UI and displays the retrieved data in the InputField
             loggedInUserData = response;
             OnGetUserData();
-        }
+        }*/
+        
+        
     }
 
     // if the user is logged in, set their data
