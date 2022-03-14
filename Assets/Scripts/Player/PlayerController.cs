@@ -1,9 +1,11 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 using CnControls;
+using Random = UnityEngine.Random;
 
 public class PlayerController : NetworkBehaviour
 {
@@ -21,8 +23,9 @@ public class PlayerController : NetworkBehaviour
     // Syncs scale
     [SyncVar(hook = "OnScaleUpdate")]
     public float scale;
-
+    
     GameManager gameManager;
+    
 
     [SerializeField]
     Material playerMat;
@@ -34,11 +37,12 @@ public class PlayerController : NetworkBehaviour
     [SerializeField]
     private float scaleMod;
 
-    [SyncVar(hook = "UpdatePlayerScore")] 
+    [SyncVar(hook = "UpdateHostScore")] 
     private int playerScore = 0;
-    [SyncVar(hook = "UpdateOpponentScore")] 
+    [SyncVar(hook = "UpdateGuestScore")] 
     private int opponentScore = 0;
-    
+
+    private bool isHost = false;
     
     // Although the initial spawner is handled by Net manager, the respawning isn't.
     // TODO : add this into its own class, clean clutter
@@ -61,6 +65,11 @@ public class PlayerController : NetworkBehaviour
         spawnPoints = GameObject.FindObjectsOfType<NetworkStartPosition>(); // gets all spawnpoints
         // to add another spawnpoint: add empty to 'spawnpoints' and call it something like 'spawnpoint3' and add NetworkStartPosition
         // component
+    }
+
+    public override void OnStartServer()
+    {
+        gameManager = GameObject.FindGameObjectWithTag("netmanager").GetComponent<GameManager>();
     }
 
     void FixedUpdate ()
@@ -120,6 +129,7 @@ public class PlayerController : NetworkBehaviour
         if (isLocalPlayer)
         {
             playerScore += 1;
+            isHost = true;
             return;
         } 
         
@@ -166,7 +176,7 @@ public class PlayerController : NetworkBehaviour
         }
 
 
-        Debug.Log(gameManager.GetSliderVal());
+        //Debug.Log(gameManager.GetSliderVal());
         playerTransform.localScale = new Vector3(gameManager.GetSliderVal() * 10, playerTransform.localScale.y, playerTransform.localScale.z);
     }
 
@@ -177,24 +187,58 @@ public class PlayerController : NetworkBehaviour
         transform.localScale = new Vector3(scale, 1, 1);
     }
 
-    public void UpdatePlayerScore(int newScore)
+    public void UpdateHostScore(int newScore)
     {
-        GameObject.FindWithTag("Score_Player").GetComponent<Text>().text = "" + newScore;
+        GameObject.FindWithTag("Score_Host").GetComponent<Text>().text = "" + newScore;
 
         if (newScore == 4)
         {
             var mpText = GameObject.FindWithTag("Match_Point").GetComponent<Text>();
-            
+
             mpText.color = Color.green;
             mpText.GetComponent<Text>().text = MatchPointText;
+            return;
         }
-        
-        
+
+        if (newScore == 5)
+        {
+            if (!isServer)
+            {
+                Debug.LogError("You win");
+                InitiateWin();
+            }
+            else
+            {
+                Debug.LogError("You lose");
+                InitiateLoss();
+            }
+
+        }
     }
 
-    public void UpdateOpponentScore(int newScore)
+    private void InitiateLoss()
     {
-        GameObject.FindWithTag("Score_Opp").GetComponent<Text>().text = "" + newScore;
+        if (gameManager == null)
+        {
+            gameManager = GameObject.FindGameObjectWithTag("netmanager").GetComponent<GameManager>();
+        }
+        
+        gameManager.QuitMatch();
+    }
+
+    private void InitiateWin()
+    {
+        if (gameManager == null)
+        {
+            gameManager = GameObject.FindGameObjectWithTag("netmanager").GetComponent<GameManager>();
+        }
+        
+        gameManager.QuitMatch();
+    }
+    
+    public void UpdateGuestScore(int newScore)
+    {
+        GameObject.FindWithTag("Score_Guest").GetComponent<Text>().text = "" + newScore;
         
         if (newScore == 4)
         {
@@ -202,6 +246,20 @@ public class PlayerController : NetworkBehaviour
             
             mpText.color = Color.red;
             mpText.GetComponent<Text>().text = MatchPointText;
+        }
+
+        if (newScore == 5)
+        {
+            if (!isServer)
+            {
+                Debug.LogError("You lose");
+                InitiateLoss();
+            }
+            else
+            {
+                Debug.LogError("You win");
+                InitiateWin();
+            }
         }
     }
 

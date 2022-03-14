@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,17 +17,35 @@ public class GameManager : NetworkBehaviour
     NetworkMatch matchMaker;
 
     Slider slider;
+
+    private MatchInfo currentMatchInfo = null;
     Button quickPlayBtn;
+    private bool isHost = false;
 
     AccountManager accManager;
 
     bool quickPlayInstantiated = false;
+    
+    // uses singleton design pattern to avoid multiple account managers in one scene
+    // for more info: https://www.journaldev.com/1377/java-singleton-design-pattern-best-practices-examples
+    private static GameManager instance; 
 
     private void Awake()
     {
         SceneManager.activeSceneChanged += OnSceneChanged;
         matchMaker = gameObject.AddComponent<NetworkMatch>();
         accManager = GameObject.FindGameObjectWithTag("accmanager").GetComponent<AccountManager>();
+        
+        
+        if (instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        instance = this;
+        DontDestroyOnLoad(this); // the account manager should exist for all scenes so we can get and set data throughout
+
     }
 
     private void OnQuickPlayClick()
@@ -39,6 +58,40 @@ public class GameManager : NetworkBehaviour
 
         Debug.Log("on quick play click");
         matchMaker.ListMatches(0, 10, "", true, 0, 0, OnMatchList);
+    }
+
+    public void QuitMatch()
+    {
+        
+        
+        // if (isServer)
+        // {
+            // matchMaker.DestroyMatch(currentMatchInfo.networkId, currentMatchInfo.domain, OnQuitMatch);
+        // }
+        // else
+        // {
+        //matchMaker.DropConnection(currentMatchInfo.networkId, NodeID.Invalid, 0, OnQuitMatch);
+        // }
+
+        if (isHost)
+        {
+            try
+            {
+                NetworkManager.singleton.StopHost();
+            }
+            catch (Exception e)
+            {
+                Debug.Log(e);
+            }
+            
+        }
+    }
+
+    public void OnQuitMatch(bool b, string s)
+    {
+        Debug.LogError("Quit match.");
+        Debug.Log("b" + b);
+        Debug.Log("s " + s);
     }
 
     private void OnMatchList(bool success, string extendedInfo, List<MatchInfoSnapshot> matches)
@@ -63,6 +116,7 @@ public class GameManager : NetworkBehaviour
         if (success)
         {
             MatchInfo hostInfo = matchInfo;
+            currentMatchInfo = matchInfo;
             NetworkManager.singleton.StartClient(hostInfo);
         }
         else
@@ -111,8 +165,10 @@ public class GameManager : NetworkBehaviour
             Debug.Log("match created successfully" + extendedInfo);
 
             MatchInfo hostInfo = matchInfo;
+            currentMatchInfo = matchInfo;
+            isHost = true;
             NetworkServer.Listen(hostInfo, 9000);
-
+            
             NetworkManager.singleton.StartHost(hostInfo);
         }
         else
@@ -120,9 +176,7 @@ public class GameManager : NetworkBehaviour
             Debug.Log("match was not created " + extendedInfo);
         }
 
-        // if there's an error, re show the menu so the player can select a different option.
-        // TODO : display error messages like in auth menu
-        // TODO : this code is repeated in OnMatchjoin -> enclose into a method
+        // if there's an error, re show the menu so the player can select a different option
         quickPlayBtn.interactable = true;
         accManager.userProgressContainer.SetActive(true);
         accManager.mainLoadWheel.SetActive(false);

@@ -57,7 +57,8 @@ public class AccountManager : MonoBehaviour
     // uses singleton design pattern to avoid multiple account managers in one scene
     // for more info: https://www.journaldev.com/1377/java-singleton-design-pattern-best-practices-examples
     public static AccountManager instance; 
-
+    
+    
     private void OnSceneChanged(Scene current, Scene next)
     {
         /* You may notice there's two different load wheels
