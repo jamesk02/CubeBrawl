@@ -16,6 +16,8 @@ public class PlayerController : NetworkBehaviour
     private float adjHorizInput;
     private float adjVertInput;
 
+    private const string MatchPointText = "!!MATCH POINT!!";
+    
     // Syncs scale
     [SyncVar(hook = "OnScaleUpdate")]
     public float scale;
@@ -32,6 +34,12 @@ public class PlayerController : NetworkBehaviour
     [SerializeField]
     private float scaleMod;
 
+    [SyncVar(hook = "UpdatePlayerScore")] 
+    private int playerScore = 0;
+    [SyncVar(hook = "UpdateOpponentScore")] 
+    private int opponentScore = 0;
+    
+    
     // Although the initial spawner is handled by Net manager, the respawning isn't.
     // TODO : add this into its own class, clean clutter
     private NetworkStartPosition[] spawnPoints;
@@ -57,12 +65,11 @@ public class PlayerController : NetworkBehaviour
 
     void FixedUpdate ()
     {
-        // Stops this script being ran on other players. Instead the info is synced from UNET
         if (!isLocalPlayer)
         {
             return;
         }
-
+        
         if (playerTransform.position.y < -30) // if the player falls below this level, he will die
         {
             Respawn();
@@ -80,18 +87,43 @@ public class PlayerController : NetworkBehaviour
     
     private void Respawn()
     {
-        if (isLocalPlayer)
+        if (!isLocalPlayer)
         {
-            // spawns at a random spawn point use -1 because count starts at 0
-            transform.position = spawnPoints[Random.Range(0, spawnPoints.Length)].transform.position;
-
-            rigidBody.velocity = new Vector3(0f, 0f, 0f);
-            rigidBody.angularVelocity = new Vector3(0f, 0f, 0f);
-            playerTransform.rotation = Quaternion.Euler(new Vector3(0f, 0f, 0f));
-            StartCoroutine(TempDisableJoystick());
-            sensitiveJoystick.HandleRespawn();
+            return;
         }
         
+        // spawns at a random spawn point use -1 because count starts at 0
+        transform.position = spawnPoints[Random.Range(0, spawnPoints.Length)].transform.position;
+
+        rigidBody.velocity = new Vector3(0f, 0f, 0f);
+        rigidBody.angularVelocity = new Vector3(0f, 0f, 0f);
+        playerTransform.rotation = Quaternion.Euler(new Vector3(0f, 0f, 0f));
+        StartCoroutine(TempDisableJoystick());
+        sensitiveJoystick.HandleRespawn();
+        
+        CmdHandleDeath();
+
+    }
+    
+    
+    /*
+     * The Command tag indicates that the code will be ran on the server
+     * Code ran on the server is then executed on both clients
+     * This means that, although the code that calls this function is ran client side,
+     * The Command function allows it to run on both clients
+     *
+     * Player (client side) -> Server (server side) -> Player and Opponent (client side)
+     */
+    [Command]
+    public void CmdHandleDeath()
+    {
+        if (isLocalPlayer)
+        {
+            playerScore += 1;
+            return;
+        } 
+        
+        opponentScore += 1;
     }
 
     /* Preventative message to stop user falling off the edge
@@ -104,6 +136,7 @@ public class PlayerController : NetworkBehaviour
         yield return new WaitForSecondsRealtime(0.25f);
         handleJoystick = true;
     }
+    
 
     private void Update()
     {
@@ -142,6 +175,34 @@ public class PlayerController : NetworkBehaviour
     {
         scale = newScale;
         transform.localScale = new Vector3(scale, 1, 1);
+    }
+
+    public void UpdatePlayerScore(int newScore)
+    {
+        GameObject.FindWithTag("Score_Player").GetComponent<Text>().text = "" + newScore;
+
+        if (newScore == 4)
+        {
+            var mpText = GameObject.FindWithTag("Match_Point").GetComponent<Text>();
+            
+            mpText.color = Color.green;
+            mpText.GetComponent<Text>().text = MatchPointText;
+        }
+        
+        
+    }
+
+    public void UpdateOpponentScore(int newScore)
+    {
+        GameObject.FindWithTag("Score_Opp").GetComponent<Text>().text = "" + newScore;
+        
+        if (newScore == 4)
+        {
+            var mpText = GameObject.FindWithTag("Match_Point").GetComponent<Text>();
+            
+            mpText.color = Color.red;
+            mpText.GetComponent<Text>().text = MatchPointText;
+        }
     }
 
     // Syncs scale

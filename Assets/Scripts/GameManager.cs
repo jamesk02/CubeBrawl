@@ -92,7 +92,6 @@ public class GameManager : NetworkBehaviour
 
                 quickPlayInstantiated = true;
             }
-            
         }
         
     }
@@ -142,8 +141,6 @@ public class GameManager : NetworkBehaviour
         if (next.buildIndex == 2)
         {
             slider = GameObject.FindGameObjectWithTag("slider").GetComponent<Slider>(); // pulls scale slider. we are unable to get this as a ref because net manager transcends scenes
-
-            
 
             slider.onValueChanged.AddListener(delegate { UpdateSliderVal(); }); // listens for when the scale slider increases, and adjusts sliderVal accordingly
 

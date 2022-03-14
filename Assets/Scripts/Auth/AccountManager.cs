@@ -20,7 +20,7 @@ public class AccountManager : MonoBehaviour
     private InputField LogInPasswordInput;
     [SerializeField]
     private Text LogInErrorText;
-
+    
     // public : so game manager can access it 
     public GameObject mainLoadWheel;
     public GameObject userProgressContainer;
@@ -53,8 +53,10 @@ public class AccountManager : MonoBehaviour
     public int playerCoins;
     public int playerGems;
     public int playerTrophies;
- 
-    public static AccountManager instance; // uses instancing to avoid multiple account managers in one scene
+    
+    // uses singleton design pattern to avoid multiple account managers in one scene
+    // for more info: https://www.journaldev.com/1377/java-singleton-design-pattern-best-practices-examples
+    public static AccountManager instance; 
 
     private void OnSceneChanged(Scene current, Scene next)
     {
@@ -280,26 +282,26 @@ public class AccountManager : MonoBehaviour
             if (www.isNetworkError || www.isHttpError)
             {
                 // If unsuccessful
-                
+
             }
             else
             {
                 Debug.Log("Successfully retrieved UserData");
-                
+
                 isMainMenuStillLoading = false;
-                
+
                 Debug.Log(www.downloadHandler.text);
 
                 String result = www.downloadHandler.text;
-                
+
                 string[] data = result.Split(','); // splits data by semi colon to reveal all values
 
                 playerCoins = Convert.ToInt32(data[0]);
                 playerGems = Convert.ToInt32(data[1]);
                 playerTrophies = Convert.ToInt32(data[2]);
-                
+
                 mainMenu.SetActive(true);
-                
+
                 GameObject.FindWithTag("mainmenu").SetActive(true);
                 //if (mainLoadWheel != null)
                 //{
@@ -310,59 +312,7 @@ public class AccountManager : MonoBehaviour
                 SceneManager.LoadScene(1); // load main scene*/ 
             }
         }
-        
-        /*IEnumerator e = DCF.GetUserData(loggedInUsername, loggedInPassword); // << Send request to get the player's data string. Provides the username and password
-        while (e.MoveNext())
-        {
-            yield return e.Current;
-        }
-        string response = e.Current as string; // << The returned string from the request
 
-        if (response == "Error")
-        {
-            //There was another error. Automatically logs player out. This error message should never appear, but is here just in case.
-            //loggedInUsername = "";
-            //loggedInPassword = "";
-        }
-        else
-        {
-            //The player's data was retrieved. Goes back to loggedIn UI and displays the retrieved data in the InputField
-            loggedInUserData = response;
-            OnGetUserData();
-        }*/
-        
-        
-    }
 
-    // if the user is logged in, set their data
-    IEnumerator SetUserData(string data)
-    {
-        IEnumerator e = DCF.SetUserData(loggedInUsername, loggedInPassword, data);
-
-        while (e.MoveNext())
-        {
-            yield return e.Current;
-            string output = e.Current as string;
-
-            if (output == "Success")
-            {
-                // success
-                Debug.Log("User data has been altered.");
-            }
-            else
-            {
-                // error
-                Debug.Log("Error setting user data.");
-            }
-        }
-    }
-
-    // logs out user
-    public void LogOut()
-    {
-        loggedInUsername = "";
-        loggedInPassword = "";
-
-        isLoggedIn = false;
     }
 }
