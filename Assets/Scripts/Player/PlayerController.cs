@@ -223,7 +223,7 @@ public class PlayerController : NetworkBehaviour
             gameManager = GameObject.FindGameObjectWithTag("netmanager").GetComponent<GameManager>();
         }
         
-        gameManager.QuitMatch();
+        gameManager.QuitMatch(GameState.LOSS);
     }
 
     private void InitiateWin()
@@ -233,8 +233,9 @@ public class PlayerController : NetworkBehaviour
             gameManager = GameObject.FindGameObjectWithTag("netmanager").GetComponent<GameManager>();
         }
         
-        gameManager.QuitMatch();
+        gameManager.QuitMatch(GameState.WIN);
     }
+    
     
     public void UpdateGuestScore(int newScore)
     {

@@ -60,19 +60,8 @@ public class GameManager : NetworkBehaviour
         matchMaker.ListMatches(0, 10, "", true, 0, 0, OnMatchList);
     }
 
-    public void QuitMatch()
+    public void QuitMatch(GameState gameState)
     {
-        
-        
-        // if (isServer)
-        // {
-            // matchMaker.DestroyMatch(currentMatchInfo.networkId, currentMatchInfo.domain, OnQuitMatch);
-        // }
-        // else
-        // {
-        //matchMaker.DropConnection(currentMatchInfo.networkId, NodeID.Invalid, 0, OnQuitMatch);
-        // }
-
         if (isHost)
         {
             try
@@ -85,14 +74,12 @@ public class GameManager : NetworkBehaviour
             }
             
         }
+        
+        StartCoroutine(instance.UpdateStats(gameState));
+
+        // So either a win or loss, bring up menu showing game stats and ELO adjustments
     }
 
-    public void OnQuitMatch(bool b, string s)
-    {
-        Debug.LogError("Quit match.");
-        Debug.Log("b" + b);
-        Debug.Log("s " + s);
-    }
 
     private void OnMatchList(bool success, string extendedInfo, List<MatchInfoSnapshot> matches)
     {
@@ -128,6 +115,72 @@ public class GameManager : NetworkBehaviour
             accManager.mainLoadWheel.SetActive(false);
             accManager.mainMenu.SetActive(true);
             accManager.playerShowcase.SetActive(true);
+        }
+    }
+    
+    IEnumerator UpdateStats(GameState gameState)
+    {
+        WWWForm form = new WWWForm();
+        if (gameState == GameState.WIN)
+        {
+            form.AddField("trophiesAdj", 25);
+            form.AddField("coinsAdj", 500);
+            
+            if (UnityEngine.Random.Range(0f, 1f) > 0.5f)
+            {
+                form.AddField("gemsAdj", 1);
+            }
+            else
+            {
+                form.AddField("gemsAdj", 0);
+            }
+        }
+        else
+        {
+            form.AddField("trophiesAdj", -25);
+            form.AddField("coinsAdj", 200);
+            form.AddField("gemsAdj", 0);
+        }
+        
+        
+        using (UnityWebRequest www = UnityWebRequest.Post("https://cubebrawl.nw.r.appspot.com/api/user/setData", form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.isNetworkError || www.isHttpError)
+            {
+                // If unsuccessful
+
+            }
+            else
+            {
+                Debug.Log("Successfully updated Player Stats");
+
+                Debug.Log(www.downloadHandler.text);
+
+                String result = www.downloadHandler.text;
+                
+                Debug.Log("Result: " + result);
+
+                string[] data = result.Split(','); // splits data by semi colon to reveal all values
+
+                int playerCoins = Convert.ToInt32(data[0]);
+                int playerGems = Convert.ToInt32(data[1]);
+                int playerTrophies = Convert.ToInt32(data[2]);
+
+                // mainMenu.SetActive(true);
+
+                GameObject.FindWithTag("mainmenu").SetActive(true);
+                
+                // show user data in UI
+                GameObject.FindGameObjectWithTag("cash_text").GetComponent<Text>().text = playerCoins.ToString();
+                GameObject.FindGameObjectWithTag("bolts_text").GetComponent<Text>().text = playerGems.ToString();
+                GameObject.FindGameObjectWithTag("cups_text").GetComponent<Text>().text = playerTrophies.ToString();
+                //if (mainLoadWheel != null)
+                //{
+                //mainLoadWheel.SetActive(false);
+                //}
+            }
         }
     }
 
