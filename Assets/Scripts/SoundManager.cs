@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿/*using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -49,10 +49,9 @@ public class SoundManager : MonoBehaviour
         // In game duel ambient music
         else if (next.buildIndex == 2)
         {
-            menuTheme.Stop();
-
+            authTheme.Stop();
+            duelAmbient.PlayDelayed(0.1f);
             duelAmbient.loop = true;
-            duelAmbient.PlayDelayed(3);
         }
     }
 
@@ -62,4 +61,4 @@ public class SoundManager : MonoBehaviour
         RenderSettings.skybox.SetFloat("_Rotation", Time.time);
     }
 
-}
+}*/

@@ -21,6 +21,7 @@ public class GameManager : NetworkBehaviour
     private MatchInfo currentMatchInfo = null;
     Button quickPlayBtn;
     private bool isHost = false;
+    private GameObject scoreMenu;
 
     AccountManager accManager;
 
@@ -35,8 +36,12 @@ public class GameManager : NetworkBehaviour
         SceneManager.activeSceneChanged += OnSceneChanged;
         matchMaker = gameObject.AddComponent<NetworkMatch>();
         accManager = GameObject.FindGameObjectWithTag("accmanager").GetComponent<AccountManager>();
-        
-        
+        scoreMenu = GameObject.Find("ScoreMenu");
+        scoreMenu.GetComponent<CanvasGroup>().alpha = 0f;
+        scoreMenu.GetComponent<CanvasGroup>().blocksRaycasts = false;
+        scoreMenu.GetComponent<CanvasGroup>().interactable = false;
+
+
         if (instance != null)
         {
             Destroy(gameObject);
@@ -120,28 +125,30 @@ public class GameManager : NetworkBehaviour
     
     IEnumerator UpdateStats(GameState gameState)
     {
+        int trophiesAdj = 0;
+        int coinsAdj = 0;
+        int gemsAdj = 0;
+        
         WWWForm form = new WWWForm();
         if (gameState == GameState.WIN)
         {
-            form.AddField("trophiesAdj", 25);
-            form.AddField("coinsAdj", 500);
-            
+            trophiesAdj = 25;
+            coinsAdj = 500;
+
             if (UnityEngine.Random.Range(0f, 1f) > 0.5f)
             {
-                form.AddField("gemsAdj", 1);
-            }
-            else
-            {
-                form.AddField("gemsAdj", 0);
+                gemsAdj = 1;
             }
         }
-        else
+        else if (gameState == GameState.LOSS)
         {
-            form.AddField("trophiesAdj", -25);
-            form.AddField("coinsAdj", 200);
-            form.AddField("gemsAdj", 0);
+            trophiesAdj = -25;
+            coinsAdj = 200;
         }
         
+        form.AddField("trophiesAdj", trophiesAdj);
+        form.AddField("gemsAdj", gemsAdj);
+        form.AddField("coinsAdj", coinsAdj);
         
         using (UnityWebRequest www = UnityWebRequest.Post("https://cubebrawl.nw.r.appspot.com/api/user/setData", form))
         {
@@ -176,6 +183,30 @@ public class GameManager : NetworkBehaviour
                 GameObject.FindGameObjectWithTag("cash_text").GetComponent<Text>().text = playerCoins.ToString();
                 GameObject.FindGameObjectWithTag("bolts_text").GetComponent<Text>().text = playerGems.ToString();
                 GameObject.FindGameObjectWithTag("cups_text").GetComponent<Text>().text = playerTrophies.ToString();
+
+                scoreMenu.GetComponent<CanvasGroup>().alpha = 1f;
+                scoreMenu.GetComponent<CanvasGroup>().blocksRaycasts = true;
+                scoreMenu.GetComponent<CanvasGroup>().interactable = true;
+
+                Text scoreText = GameObject.Find("Score_Text").GetComponent<Text>();
+                Text scoreIndicText = GameObject.Find("Score_Indic_Text").GetComponent<Text>();
+                Text statsUpdateText = GameObject.Find("Stats_Update_Text").GetComponent<Text>();
+
+                if (gameState == GameState.WIN)
+                {
+                    scoreText.text = "Victory";
+                    scoreIndicText.text = "";
+                    statsUpdateText.text = "";
+                }
+                else
+                {
+                    scoreText.text = "Defeat";
+                    scoreIndicText.text = "";
+                    statsUpdateText.text = "";
+                }
+                
+
+
                 //if (mainLoadWheel != null)
                 //{
                 //mainLoadWheel.SetActive(false);
