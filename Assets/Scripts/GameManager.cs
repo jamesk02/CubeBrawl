@@ -36,7 +36,7 @@ public class GameManager : NetworkBehaviour
         SceneManager.activeSceneChanged += OnSceneChanged;
         matchMaker = gameObject.AddComponent<NetworkMatch>();
         accManager = GameObject.FindGameObjectWithTag("accmanager").GetComponent<AccountManager>();
-        scoreMenu = GameObject.Find("ScoreMenu");
+        scoreMenu = GameObject.FindWithTag("ScoreMenu");
         scoreMenu.GetComponent<CanvasGroup>().alpha = 0f;
         scoreMenu.GetComponent<CanvasGroup>().blocksRaycasts = false;
         scoreMenu.GetComponent<CanvasGroup>().interactable = false;
@@ -183,26 +183,30 @@ public class GameManager : NetworkBehaviour
                 GameObject.FindGameObjectWithTag("cash_text").GetComponent<Text>().text = playerCoins.ToString();
                 GameObject.FindGameObjectWithTag("bolts_text").GetComponent<Text>().text = playerGems.ToString();
                 GameObject.FindGameObjectWithTag("cups_text").GetComponent<Text>().text = playerTrophies.ToString();
-
+                
+                scoreMenu = GameObject.FindWithTag("ScoreMenu");
                 scoreMenu.GetComponent<CanvasGroup>().alpha = 1f;
                 scoreMenu.GetComponent<CanvasGroup>().blocksRaycasts = true;
                 scoreMenu.GetComponent<CanvasGroup>().interactable = true;
 
-                Text scoreText = GameObject.Find("Score_Text").GetComponent<Text>();
-                Text scoreIndicText = GameObject.Find("Score_Indic_Text").GetComponent<Text>();
-                Text statsUpdateText = GameObject.Find("Stats_Update_Text").GetComponent<Text>();
+                Text scoreText = GameObject.FindWithTag("Score_Text").GetComponent<Text>();
+                Text statsUpdateText = GameObject.FindWithTag("Stats_Update_Text").GetComponent<Text>();
 
                 if (gameState == GameState.WIN)
                 {
                     scoreText.text = "Victory";
-                    scoreIndicText.text = "";
-                    statsUpdateText.text = "";
+                    Debug.LogError("Victory");
+                    statsUpdateText.text = String.Format("+{0} trophies\n+{1} coins\n+{2} gems", trophiesAdj, coinsAdj, gemsAdj);
+                }
+                else if (gameState == GameState.LOSS)
+                {
+                    scoreText.text = "Defeat";
+                    Debug.LogError("Defeat");
+                    statsUpdateText.text = String.Format("{0} trophies\n+{1} coins\n+{2} gems", trophiesAdj, coinsAdj, gemsAdj);
                 }
                 else
                 {
-                    scoreText.text = "Defeat";
-                    scoreIndicText.text = "";
-                    statsUpdateText.text = "";
+                    Debug.LogError("Error Game State : " + gameState.ToString());
                 }
                 
 
